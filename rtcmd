@@ -1,0 +1,88 @@
+#!/usr/bin/env python3
+
+import argparse
+import sqlite3
+import sys
+
+class RTCmd:
+    DATABASE_NAME=".rtcmd.db3"
+
+    def __init__(self):
+        self._conn = sqlite3.connect(RTCmd.DATABASE_NAME)
+        self._conn.row_factory = sqlite3.Row
+        self._cur = self._conn.cursor()
+
+        self._cur.execute("CREATE TABLE IF NOT EXISTS commands ("
+                            "id INTEGER PRIMARY KEY,"
+                            "tag TEXT NOT NULL,"
+                            "command TEXT NOT NULL,"
+                            "note TEXT)")
+
+    def add(self, tag, command, note):
+        self._cur.execute("INSERT INTO commands (tag, command, note) "
+                          "VALUES(?, ?, ?)", (tag, command, note))
+
+    def list(self, tag=None):
+        if tag is not None:
+            self._cur.execute("SELECT * FROM commands WHERE tag = ? "
+                              "ORDER BY tag", (tag,))
+        else:
+            self._cur.execute("SELECT * FROM commands ORDER BY tag")
+
+        tag = None
+        for row in self._cur:
+            if tag != row["tag"]:
+                tag = row["tag"]
+                print("\n--- {} ---".format(tag))
+
+            print("{:4} | {}".format(row["id"], row["command"]))
+            if row["note"]:
+                print("     | {}".format(row["note"]))
+
+    def remove(self, index):
+        self._cur.execute("DELETE FROM commands WHERE id = ?", (index,))
+
+    def __del__(self):
+        self._conn.commit()
+        self._conn.close()
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--command",
+            help="Command to remember")
+    parser.add_argument("--delete", metavar="IDX",
+            help="Delete a saved command with a given index")
+    parser.add_argument("--list", metavar="TAG", nargs="?", const="",
+            help="List saved commands")
+    parser.add_argument("--note",
+            help="Optional note")
+    parser.add_argument("--tag",
+            help="Tag for the given command")
+
+    args = parser.parse_args()
+
+    rtcmd = RTCmd()
+    op = None
+
+    try:
+        # ADD
+        if args.tag and args.command:
+            rtcmd.add(args.tag, args.command, args.note)
+        # DELETE
+        elif args.delete:
+            rtcmd.remove(args.delete)
+        # LIST
+        elif args.list is not None:
+            if len(args.list) == 0:
+                args.list = None
+
+            rtcmd.list(args.list)
+        # INVALID ARGUMENTS
+        else:
+            parser.print_help()
+            sys.exit(1)
+
+    except Exception as e:
+        print("Error: {}".format(e), file=sys.stderr)
+        sys.exit(1)
