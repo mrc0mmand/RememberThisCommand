@@ -6,7 +6,7 @@ import sqlite3
 import sys
 
 class RTCmd:
-    """Wrapper class around a SQLite DB manipulation"""
+    """Wrapper class around an SQLite DB manipulation"""
     DATABASE_NAME = os.path.expanduser("~/.rtcmd.db3")
 
     def __init__(self):
@@ -24,7 +24,7 @@ class RTCmd:
                             "note TEXT)")
 
     def _print_cursor(self):
-        """Print the latest query results from a cursor in human-friendly
+        """Print the latest query results from a cursor in a human-friendly
            way.
 
         Returns
