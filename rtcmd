@@ -46,8 +46,8 @@ class RTCmd:
         for row in self._cur:
             rows += 1
             if tag != row["tag"]:
+                print("{}--- {} ---".format('' if tag is None else '\n', row["tag"]))
                 tag = row["tag"]
-                print("\n--- {} ---".format(tag))
 
             self._style_print(rows, "{:5} | {}".format(row["id"], row["command"]))
             if row["note"]:
