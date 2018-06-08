@@ -6,9 +6,13 @@ import sqlite3
 import sys
 
 class RTCmd:
+    """Wrapper class around a SQLite DB manipulation"""
     DATABASE_NAME = os.path.expanduser("~/.rtcmd.db3")
 
     def __init__(self):
+        """Initialize a DB connection and create the 'commands' table
+           if it doesn't already exist.
+        """
         self._conn = sqlite3.connect(RTCmd.DATABASE_NAME)
         self._conn.row_factory = sqlite3.Row
         self._cur = self._conn.cursor()
@@ -20,6 +24,14 @@ class RTCmd:
                             "note TEXT)")
 
     def _print_cursor(self):
+        """Print the latest query results from a cursor in human-friendly
+           way.
+
+        Returns
+        -------
+        int
+            number of processed rows
+        """
         rows = 0
         tag = None
 
@@ -36,10 +48,28 @@ class RTCmd:
         return rows
 
     def add(self, tag, command, note):
+        """Add a new command into the DB.
+
+        Parameters
+        ----------
+        tag : str
+            Tag for a given command (e.g. 'git')
+        command : str
+            Command to store (e.g. 'git commit')
+        note : str
+            Optional note (e.g. 'Commit changes')
+        """
         self._cur.execute("INSERT INTO commands (tag, command, note) "
                           "VALUES(?, ?, ?)", (tag, command, note))
 
     def list(self, tag=None):
+        """List stored commands.
+
+        Parameters
+        ----------
+        tag : str
+            If specified, list only commands with this tag
+        """
         if tag is not None:
             self._cur.execute("SELECT * FROM commands WHERE tag = ? "
                               "ORDER BY tag", (tag,))
@@ -51,9 +81,23 @@ class RTCmd:
             print("Nothing to show")
 
     def remove(self, index):
+        """Remove a command with given index.
+
+        Parameters
+        ----------
+        index : int
+            Absolute record index (i.e. index used in the DB)
+        """
         self._cur.execute("DELETE FROM commands WHERE id = ?", (index,))
 
     def search(self, term):
+        """Search for commands corresponding to given term.
+
+        Parameters
+        ----------
+        term : str
+            Term to search for (using SQLite syntax)
+        """
         self._cur.execute("SELECT * FROM commands WHERE command LIKE ? "
                           "OR note LIKE ?", (term, term))
 
@@ -62,6 +106,7 @@ class RTCmd:
             print("Nothing was found")
 
     def __del__(self):
+        """Commit all changes and close the DB connection."""
         self._conn.commit()
         self._conn.close()
 
