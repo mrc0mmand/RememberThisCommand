@@ -4,6 +4,7 @@ import argparse
 import os
 import sqlite3
 import sys
+from colorama import Style
 
 class RTCmd:
     """Wrapper class around an SQLite DB manipulation"""
@@ -24,6 +25,12 @@ class RTCmd:
                             "command TEXT NOT NULL,"
                             "note TEXT)")
 
+    def _style_print(self, idx, string):
+        if idx % 2 == 0:
+            print(Style.BRIGHT, string, Style.RESET_ALL)
+        else:
+            print(Style.NORMAL, string, Style.RESET_ALL)
+
     def _print_cursor(self):
         """Print the latest query results from a cursor in a human-friendly
            way.
@@ -42,9 +49,9 @@ class RTCmd:
                 tag = row["tag"]
                 print("\n--- {} ---".format(tag))
 
-            print("{:5} | {}".format(row["id"], row["command"]))
+            self._style_print(rows, "{:5} | {}".format(row["id"], row["command"]))
             if row["note"]:
-                print("      | {}".format(row["note"]))
+                self._style_print(rows, "      | {}".format(row["note"]))
 
         return rows
 
