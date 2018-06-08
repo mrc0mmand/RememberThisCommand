@@ -96,7 +96,7 @@ class RTCmd:
         Parameters
         ----------
         term : str
-            Term to search for (using SQLite syntax)
+            Term to search for (using SQL syntax)
         """
         self._cur.execute("SELECT * FROM commands WHERE command LIKE ? "
                           "OR note LIKE ?", (term, term))
