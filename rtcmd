@@ -18,6 +18,22 @@ class RTCmd:
                             "command TEXT NOT NULL,"
                             "note TEXT)")
 
+    def _print_cursor(self):
+        rows = 0
+        tag = None
+
+        for row in self._cur:
+            rows += 1
+            if tag != row["tag"]:
+                tag = row["tag"]
+                print("\n--- {} ---".format(tag))
+
+            print("{:5} | {}".format(row["id"], row["command"]))
+            if row["note"]:
+                print("      | {}".format(row["note"]))
+
+        return rows
+
     def add(self, tag, command, note):
         self._cur.execute("INSERT INTO commands (tag, command, note) "
                           "VALUES(?, ?, ?)", (tag, command, note))
@@ -29,18 +45,20 @@ class RTCmd:
         else:
             self._cur.execute("SELECT * FROM commands ORDER BY tag")
 
-        tag = None
-        for row in self._cur:
-            if tag != row["tag"]:
-                tag = row["tag"]
-                print("\n--- {} ---".format(tag))
-
-            print("{:4} | {}".format(row["id"], row["command"]))
-            if row["note"]:
-                print("     | {}".format(row["note"]))
+        rows = self._print_cursor()
+        if rows == 0:
+            print("Nothing to show")
 
     def remove(self, index):
         self._cur.execute("DELETE FROM commands WHERE id = ?", (index,))
+
+    def search(self, term):
+        self._cur.execute("SELECT * FROM commands WHERE command LIKE ? "
+                          "OR note LIKE ?", (term, term))
+
+        rows = self._print_cursor()
+        if rows == 0:
+            print("Nothing was found")
 
     def __del__(self):
         self._conn.commit()
@@ -50,20 +68,21 @@ class RTCmd:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--command",
-            help="Command to remember")
+            help="command to remember")
     parser.add_argument("--delete", metavar="IDX",
-            help="Delete a saved command with a given index")
+            help="delete a saved command with a given index")
     parser.add_argument("--list", metavar="TAG", nargs="?", const="",
-            help="List saved commands")
+            help="list saved commands")
     parser.add_argument("--note",
-            help="Optional note")
+            help="optional note")
+    parser.add_argument("--search", metavar="TERM",
+            help="Search in 'command' and 'note' fields (?, %% - wildcards)")
     parser.add_argument("--tag",
-            help="Tag for the given command")
+            help="tag for the given command")
 
     args = parser.parse_args()
 
     rtcmd = RTCmd()
-    op = None
 
     try:
         # ADD
@@ -78,6 +97,8 @@ if __name__ == "__main__":
                 args.list = None
 
             rtcmd.list(args.list)
+        elif args.search:
+            rtcmd.search(args.search)
         # INVALID ARGUMENTS
         else:
             parser.print_help()
