@@ -4,7 +4,7 @@ import argparse
 import os
 import sqlite3
 import sys
-from colorama import Style
+from colorama import Style, init as colorinit
 
 class RTCmd:
     """Wrapper class around an SQLite DB manipulation"""
@@ -120,6 +120,8 @@ class RTCmd:
 
 
 if __name__ == "__main__":
+    colorinit()
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--command",
             help="command to remember")
